@@ -20,68 +20,169 @@ class SplashScreen extends StatefulWidget{
   _SplashScreenState createState()=>_SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>{
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+
+  late AnimationController _controller;
+  late Animation<double> scaleAnim;
+  late Animation<double> opacityAnim;
 
   @override
+  void initState() {
+    super.initState();
 
-void initState(){
-  super.initState();
-          checkFirstTime();
-  
-}
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2),
+    );
 
-void checkFirstTime() async{
-  final prefs=await SharedPreferences.getInstance();
-  bool isFirstTime=prefs.getBool('isFirstTime') ?? true;
+    scaleAnim = Tween(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    );
 
-  await Future.delayed(const Duration(seconds: 2));
+    opacityAnim = Tween(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
 
-  if(!mounted) return;
-  if(isFirstTime){
-    Navigator.pushReplacement(context,MaterialPageRoute(builder: (_)=>OnboardingScreen()));
-  }else{
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=>HomeScreen(
-      onThemeChanged:widget.onThemeChanged,
-      isDark:widget.isDark,
-    )));
+    _controller.forward();
+
+    checkFirstTime();
   }
-}
+
+  void checkFirstTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    bool isFirstTime = prefs.getBool('isFirstTime') ?? true;
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    if (isFirstTime) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => OnboardingScreen()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => HomeScreen(
+            onThemeChanged: widget.onThemeChanged,
+            isDark: widget.isDark,
+          ),
+        ),
+      );
+    }
+  }
 
   @override
- 
- Widget build(BuildContext context){
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-
       body: Container(
-
-        height: double.infinity,
         width: double.infinity,
-
-
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [
-            Color.fromARGB(255, 1, 6, 33),
-            Color.fromARGB(255, 3, 130, 173)
-          ],
-          begin:Alignment.topLeft,
-          end:Alignment.bottomRight)
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF0F172A),
+              Color(0xFF1E3A8A),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-        child: Center(
-          child: Text(
-            "PocketPilot",
-            style: GoogleFonts.orbitron(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 28,
-               
-              
+        child: FadeTransition(
+          opacity: opacityAnim,
+          child: ScaleTransition(
+            scale: scaleAnim,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+
+                // 🔥 GLOW EFFECT
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0xFFF59E0B).withOpacity(0.25),
+                        blurRadius: 40,
+                        spreadRadius: 10,
+                      )
+                    ],
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.06),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.1),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.account_balance_wallet,
+                      size: 45,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // 🔥 APP NAME
+                Text(
+                  "PocketPilot",
+                 style: GoogleFonts.orbitron(
+  fontSize: 26,
+  fontWeight: FontWeight.w700,
+  letterSpacing: 0.3,
+  color: Colors.white,
+),
+                ),
+
+                const SizedBox(height: 10),
+
+                Text(
+                  "Track • Analyze • Grow",
+                  style: TextStyle(
+                  color: Color(0xFFF59E0B).withOpacity(0.8),                    fontSize: 13,
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // 🔥 LOADER
+                SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white.withOpacity(0.7),
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                // 🔥 BOTTOM BRAND TOUCH
+                Text(
+                  "Powered by PocketPilot",
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.white.withOpacity(0.4),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
-
     );
-
- }
+  }
 }
