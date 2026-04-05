@@ -142,21 +142,30 @@ Widget build(BuildContext context) {
               ),
             ),
             child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: selectedCategory,
-                isExpanded: true,
-                items: ["Food", "Travel", "Shopping", "General"]
-                    .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(e),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedCategory = value!;
-                  });
-                },
-              ),
+              child:DropdownButton<String>(
+  value: selectedCategory,
+  isExpanded: true,
+  items: [
+    
+    "Food",
+    "Transport",
+    "Shopping",
+    "Bills",
+    "Entertainment",
+    "Health",
+    "Education",
+    "General",
+    "Other",
+  ].map((e) => DropdownMenuItem(
+    value: e,
+    child: Text(e),
+  )).toList(),
+  onChanged: (value) {
+    setState(() {
+      selectedCategory = value!;
+    });
+  },
+),
             ),
           ),
 

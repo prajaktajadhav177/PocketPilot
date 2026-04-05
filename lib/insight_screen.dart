@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart' show Hive;
@@ -14,6 +15,7 @@ class _InsightScreenState extends State<InsightScreen>{
 
   final box=Hive.box('transactions');
   List<TransactionModel> transactions=[];
+  int touchedIndex = -1;
 
   @override
   void initState(){
@@ -54,10 +56,31 @@ class _InsightScreenState extends State<InsightScreen>{
     return sorted.first.key;
   }
 
+Map<String, double> getCategoryData() {
+  Map<String, double> data = {};
+
+  for (var t in transactions) {
+    if (t.type == "expense") {
+      data[t.category] = (data[t.category] ?? 0) + t.amount;
+    }
+  }
+  return data;
+}
 @override
-@override
+
 Widget build(BuildContext context) {
   //final isDark = Theme.of(context).brightness == Brightness.dark;
+
+  final data = getCategoryData().entries.toList()
+  ..sort((a, b) => b.value.compareTo(a.value));
+
+final colors = [
+  Color(0xFFF59E0B),
+  Colors.red,
+  Colors.green,
+  Colors.blue,
+  Colors.purple,
+];
 
   return Scaffold(
     appBar: AppBar(
@@ -162,7 +185,7 @@ Widget build(BuildContext context) {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          "You spent the most on $topCategory",
+                          "You spent the most on $topCategory this month ",
                           style: const TextStyle(
                               fontWeight: FontWeight.w600),
                         ),
@@ -170,6 +193,68 @@ Widget build(BuildContext context) {
                     ],
                   ),
                 ),
+
+                const SizedBox(height: 20),
+
+                SizedBox(
+  height: 200,
+  child: data.isEmpty
+      ? const Center(child: Text("No data"))
+      : PieChart(
+  PieChartData(
+    centerSpaceRadius: 40,
+    sectionsSpace: 4,
+    startDegreeOffset: -90,
+
+    pieTouchData: PieTouchData(
+  touchCallback: (event, response) {
+    setState(() {
+      if (!event.isInterestedForInteractions ||
+          response == null ||
+          response.touchedSection == null) {
+        touchedIndex = -1;
+        return;
+      }
+
+      touchedIndex =
+          response.touchedSection?.touchedSectionIndex ?? -1;
+    });
+  },
+),
+
+    sections: List.generate(data.length, (i) {
+      final e = data[i];
+      final isTouched = i == touchedIndex;
+
+      final percent =
+          ((e.value / totalExpense) * 100).toStringAsFixed(0);
+
+      return PieChartSectionData(
+        value: e.value,
+        radius: isTouched ? 70 : 60, // 👈 pop effect
+        title: isTouched
+            ? "${e.key}\n$percent%"
+            : "",
+
+        titleStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+
+        gradient: LinearGradient(
+          colors: [
+            colors[i % colors.length],
+            colors[i % colors.length].withOpacity(0.6),
+          ],
+        ),
+      );
+    }),
+  ),
+)
+        
+),
+
 
                 const SizedBox(height: 20),
 
@@ -209,7 +294,8 @@ Widget build(BuildContext context) {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: Color(0xFFF59E0B).withOpacity(0.1)                          ),
-                          child: const Icon(Icons.category,
+                          child: const Icon(
+                            Icons.category,
                               size: 18),
                         ),
 

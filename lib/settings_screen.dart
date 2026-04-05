@@ -133,22 +133,22 @@ void toggleTheme(bool value) async{
 
  @override
 Widget build(BuildContext context) {
-
-  BoxDecoration _cardDecoration(BuildContext context) {
+BoxDecoration _cardDecoration(BuildContext context) {
   return BoxDecoration(
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(18),
     color: Theme.of(context).cardColor,
     boxShadow: [
       BoxShadow(
-        color: Colors.black.withOpacity(0.04),
-        blurRadius: 8,
-        offset: const Offset(0, 3),
+        color: Colors.black.withOpacity(0.03),
+        blurRadius: 10,
+        offset: const Offset(0, 4),
       )
     ],
   );
 }
   return Scaffold(
     appBar: AppBar(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       title: Text(
   "Settings",
   style: GoogleFonts.orbitron(
@@ -172,10 +172,11 @@ Widget build(BuildContext context) {
     decoration: _cardDecoration(context),
     child: Row(
       children: [
-        const CircleAvatar(
-          radius: 22,
-          child: Icon(Icons.person),
-        ),
+        CircleAvatar(
+  radius: 22,
+  backgroundColor: const Color(0xFFF59E0B).withOpacity(0.15),
+  child: const Icon(Icons.person, color: Color(0xFFF59E0B)),
+),
         const SizedBox(width: 12),
 
         Expanded(
@@ -214,6 +215,7 @@ Widget build(BuildContext context) {
         Container(
           decoration: _cardDecoration(context),
           child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             title: const Text("Dark Mode"),
             trailing: Switch(
               value: isDarkMode,
@@ -232,14 +234,19 @@ Widget build(BuildContext context) {
             children: [
 
               ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                 title: const Text("Currency"),
                 subtitle: const Text("INR (₹)"),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               ),
 
-              Divider(height: 1),
+              const Padding(
+  padding: EdgeInsets.symmetric(horizontal: 16),
+  child: Divider(height: 1),
+),
 
               ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                 title: const Text("Notifications"),
                 trailing: Switch(
                   value: true,
@@ -247,11 +254,22 @@ Widget build(BuildContext context) {
                 ),
               ),
 
-              Divider(height: 1),
+             const Padding(
+  padding: EdgeInsets.symmetric(horizontal: 16),
+  child: Divider(height: 1),
+),
 
               ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                 title: const Text("Reset Data"),
-                trailing: const Icon(Icons.delete, color: Colors.red),
+                trailing: Row(
+  mainAxisSize: MainAxisSize.min,
+  children: const [
+    Icon(Icons.delete, color: Colors.red),
+    SizedBox(width: 6),
+    Icon(Icons.arrow_forward_ios, size: 14),
+  ],
+),
                 onTap: () {
                   _showResetDialog();
                 },
@@ -266,19 +284,19 @@ Widget build(BuildContext context) {
 
 Widget _buildSectionTitle(String title) {
   return Padding(
-    padding: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.only(bottom: 10, top: 8),
     child: Text(
-      title,
+      title.toUpperCase(),
       style: GoogleFonts.orbitron(
-  fontSize: 12,
-  letterSpacing: 1,
-  fontWeight: FontWeight.w700,
-  color: Theme.of(context)
-      .textTheme
-      .bodySmall
-      ?.color
-      ?.withOpacity(0.6),
-),
+        fontSize: 11,
+        letterSpacing: 1.5,
+        fontWeight: FontWeight.w600,
+        color: Theme.of(context)
+            .textTheme
+            .bodySmall
+            ?.color
+            ?.withOpacity(0.5),
+      ),
     ),
   );
 }
