@@ -52,18 +52,18 @@ void dispose(){
     desc: "Stay on top of your expenses and build better financial habits every day.",
     gradient: [Color(0xFF0F172A), Color(0xFF1E293B)],
   ),
+
+
+  
 ],
             ),
+            
           ),
-      
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(3, (index)=>buildDot(index)),
-          ),
-          SizedBox(height: 20),
+           
+          SizedBox(height: 15),
       
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.only(left: 18,right: 18,bottom: 15 ),
             child: ElevatedButton(
   style: ElevatedButton.styleFrom(
   minimumSize: const Size(double.infinity, 55),
@@ -165,6 +165,14 @@ void dispose(){
             height: 1.4,
           ),
         ),
+
+         SizedBox(height:110),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(3, (index)=>buildDot(index)),
+          ),
+          SizedBox(height: 20),
+      
       ],
     ),
   );

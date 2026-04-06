@@ -1,303 +1,327 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SettingsScreen extends StatefulWidget{
-
+class SettingsScreen extends StatefulWidget {
   final bool isDark;
   final Function(bool) onThemeChanged;
 
   const SettingsScreen({
     super.key,
     required this.isDark,
-    required this.onThemeChanged
-
+    required this.onThemeChanged,
   });
 
   @override
-  _SettingsScreenState createState()=> _SettingsScreenState();
+  _SettingsScreenState createState() => _SettingsScreenState();
 }
 
+class _SettingsScreenState extends State<SettingsScreen> {
+  late bool isDarkMode;
+  String username = "User";
+  File? profileImage;
 
+  @override
+  void initState() {
+    super.initState();
+    isDarkMode = widget.isDark;
+    loadUser();
+  }
 
-class _SettingsScreenState extends State<SettingsScreen>{
+  Future<void> loadUser() async {
+    final prefs = await SharedPreferences.getInstance();
 
-late bool isDarkMode;
-String username = "User";
+    setState(() {
+      username = prefs.getString('username') ?? "User";
 
-@override
-void initState(){
-  super.initState();
-  isDarkMode=widget.isDark;
-  loadUser();
-}
+      final path = prefs.getString('profile_image');
+      if (path != null) profileImage = File(path);
+    });
+  }
 
+  Future<void> pickImage() async {
+    final picked =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
 
-void loadUser() async {
-  final prefs = await SharedPreferences.getInstance();
-  setState(() {
-    username = prefs.getString('username') ?? "User";
-  });
-}
+    if (picked != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profile_image', picked.path);
 
-void _showEditNameDialog() {
-  final controller = TextEditingController(text: username);
+      setState(() => profileImage = File(picked.path));
+    }
+  }
 
-  showDialog(
-    context: context,
-    builder: (_) => AlertDialog(
-      title: const Text("Edit Name"),
-      content: TextField(
-        controller: controller,
-        decoration: const InputDecoration(
-          hintText: "Enter your name",
-        ),
+  void toggleTheme(bool value) async {
+    setState(() => isDarkMode = value);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkMode', value);
+
+    widget.onThemeChanged(value);
+  }
+
+  void _showEditNameDialog() {
+    final controller = TextEditingController(text: username);
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Edit Name"),
+        content: TextField(controller: controller),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel")),
+          TextButton(
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isEmpty) return;
+
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('username', newName);
+
+              setState(() => username = newName);
+
+              Navigator.pop(context);
+              Navigator.pop(context, newName);
+            },
+            child: const Text("Save"),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"),
-        ),
-        TextButton(
-          onPressed: () async {
-  final newName = controller.text.trim();
-
-  if (newName.isEmpty) return;
-
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString('username', newName);
-
-  setState(() {
-    username = newName;
-  });
-
-  Navigator.pop(context); 
-
-  Navigator.pop(context, newName); 
-},
-          child: const Text("Save"),
-        ),
-      ],
-    ),
-  );
-}
-
-void toggleTheme(bool value) async{
-  setState(() {
-    isDarkMode=value;
-  });
-  final prefs=await SharedPreferences.getInstance();
-  await prefs.setBool('isDarkMode', value);
-  widget.onThemeChanged(value);
-   }
+    );
+  }
 
   void _showResetDialog() {
-  showDialog(
-    context: context,
-    builder: (_) => AlertDialog(
-      title: const Text("Reset Data"),
-      content: const Text(
-        "This will delete all your transactions. This action cannot be undone.",
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Reset Data"),
+        content: const Text(
+            "This will delete all your transactions. This action cannot be undone."),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel")),
+          TextButton(
+            onPressed: () async {
+              final box = Hive.box('transactions');
+              await box.clear();
+
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove('goal');
+
+              if (!mounted) return;
+
+              Navigator.pop(context);
+              Navigator.pop(context, "reset");
+            },
+            child:
+                const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"),
-        ),
-        TextButton(
-          onPressed: () async {
+    );
+  }
 
-            final box = Hive.box('transactions');
-            await box.clear();
-
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.remove('goal');
-
-            if (!mounted) return;
-
-            Navigator.pop(context); 
-
-            Navigator.pop(context, "reset");
-
-          },
-          child: const Text(
-            "Delete",
-            style: TextStyle(color: Colors.red),
-          ),
-        ),
+  // ✅ MATCH YOUR EXISTING CARD STYLE
+  BoxDecoration cardDecoration(BuildContext context) {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(18),
+      color: Theme.of(context).cardColor,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.04),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        )
       ],
-    ),
-  );
-}
+    );
+  }
 
- @override
-Widget build(BuildContext context) {
-BoxDecoration _cardDecoration(BuildContext context) {
-  return BoxDecoration(
-    borderRadius: BorderRadius.circular(18),
-    color: Theme.of(context).cardColor,
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.03),
-        blurRadius: 10,
-        offset: const Offset(0, 4),
-      )
-    ],
-  );
-}
-  return Scaffold(
-    appBar: AppBar(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      title: Text(
-  "Settings",
-  style: GoogleFonts.orbitron(
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0.3,
-  ),
-),
-      centerTitle: true,
-      elevation: 0,
-    ),
-    body: ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
+  @override
+  Widget build(BuildContext context) {
+    final textColor = Theme.of(context).textTheme.bodyLarge?.color;
 
-        _buildSectionTitle("Profile"),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Settings",
+            style: GoogleFonts.orbitron(fontWeight: FontWeight.w600)),
+        centerTitle: true,
+        elevation: 0,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _section("Profile"),
 
-       GestureDetector(
-  onTap: _showEditNameDialog,
-  child: Container(
-    padding: const EdgeInsets.all(16),
-    decoration: _cardDecoration(context),
-    child: Row(
-      children: [
-        CircleAvatar(
-  radius: 22,
-  backgroundColor: const Color(0xFFF59E0B).withOpacity(0.15),
-  child: const Icon(Icons.person, color: Color(0xFFF59E0B)),
-),
-        const SizedBox(width: 12),
+          // 👤 PROFILE CARD
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: cardDecoration(context),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: pickImage,
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 26,
+                        backgroundColor:
+                            const Color(0xFFF59E0B).withOpacity(0.15),
+                        backgroundImage: profileImage != null
+                            ? FileImage(profileImage!)
+                            : null,
+                        child: profileImage == null
+                            ? const Icon(Icons.person,
+                                color: Color(0xFFF59E0B))
+                            : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFFF59E0B),
+                          ),
+                          child: const Icon(Icons.edit,
+                              size: 12, color: Colors.black),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
 
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                username,
-                style: GoogleFonts.poppins(
-  fontWeight: FontWeight.w600,
-  fontSize: 15,
-    color: Theme.of(context).textTheme.bodyLarge?.color,
-),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                "Tap to edit",
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _showEditNameDialog,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(username,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: textColor,
+                            )),
+                        const SizedBox(height: 2),
+                        const Text("Tap to edit",
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey)),
+                      ],
+                    ),
+                  ),
+                ),
+
+                Icon(Icons.arrow_forward_ios,
+                    size: 16, color: Colors.grey),
+              ],
+            ),
           ),
-        ),
 
-        const Icon(Icons.edit),
-      ],
-    ),
-  ),
-),
+          const SizedBox(height: 20),
 
-        
+          _section("Appearance"),
 
-        const SizedBox(height: 20),
-
-        _buildSectionTitle("Appearance"),
-
-        Container(
-          decoration: _cardDecoration(context),
-          child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-            title: const Text("Dark Mode"),
-            trailing: Switch(
+          Container(
+            decoration: cardDecoration(context),
+            child: SwitchListTile(
+              title: const Text("Dark Mode"),
               value: isDarkMode,
               onChanged: toggleTheme,
             ),
           ),
-        ),
 
-        const SizedBox(height: 20),
+          const SizedBox(height: 20),
 
-        _buildSectionTitle("Preferences"),
+          _section("Preferences"),
 
-        Container(
-          decoration: _cardDecoration(context),
-          child: Column(
-            children: [
+          Container(
+            decoration: cardDecoration(context),
+            child: Column(
+              children: [
+                _tile("Currency", "INR (₹)"),
 
-              ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                title: const Text("Currency"),
-                subtitle: const Text("INR (₹)"),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              ),
+                divider(),
 
-              const Padding(
-  padding: EdgeInsets.symmetric(horizontal: 16),
-  child: Divider(height: 1),
-),
-
-              ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                title: const Text("Notifications"),
-                trailing: Switch(
+                SwitchListTile(
+                  title: const Text("Notifications"),
                   value: true,
                   onChanged: (_) {},
                 ),
-              ),
 
-             const Padding(
-  padding: EdgeInsets.symmetric(horizontal: 16),
-  child: Divider(height: 1),
-),
+                divider(),
 
-              ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                title: const Text("Reset Data"),
-                trailing: Row(
-  mainAxisSize: MainAxisSize.min,
-  children: const [
-    Icon(Icons.delete, color: Colors.red),
-    SizedBox(width: 6),
-    Icon(Icons.arrow_forward_ios, size: 14),
-  ],
-),
-                onTap: () {
-                  _showResetDialog();
-                },
-              ),
-            ],
+                _tile("Language", "English"),
+
+                divider(),
+
+                ListTile(
+                  title: const Text("Help Centre"),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: const Text("Help Centre"),
+                        content: const Text(
+                            "Contact: support@pocketpilot.com"),
+                      ),
+                    );
+                  },
+                ),
+
+                divider(),
+
+                ListTile(
+                  title: const Text("Reset Data"),
+                  trailing:
+                      const Icon(Icons.delete, color: Colors.red),
+                  onTap: _showResetDialog,
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildSectionTitle(String title) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 10, top: 8),
-    child: Text(
-      title.toUpperCase(),
-      style: GoogleFonts.orbitron(
-        fontSize: 11,
-        letterSpacing: 1.5,
-        fontWeight: FontWeight.w600,
-        color: Theme.of(context)
-            .textTheme
-            .bodySmall
-            ?.color
-            ?.withOpacity(0.5),
+        ],
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Widget divider() => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16),
+        child: Divider(height: 1),
+      );
+
+  Widget _tile(String title, String subtitle) {
+    return ListTile(
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+    );
+  }
+
+  Widget _section(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10, top: 8),
+      child: Text(
+        title.toUpperCase(),
+        style: GoogleFonts.orbitron(
+          fontSize: 11,
+          letterSpacing: 1.5,
+          fontWeight: FontWeight.w600,
+          color: Theme.of(context)
+              .textTheme
+              .bodySmall
+              ?.color
+              ?.withOpacity(0.5),
+        ),
+      ),
+    );
+  }
 }
