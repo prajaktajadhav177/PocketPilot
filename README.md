@@ -48,13 +48,6 @@ Pocket Pilot is a Flutter-based expense tracking app built to manage daily finan
 
 ---
 
-## 🖼 Profile
-
-- Add profile image from gallery  
-- Stored locally using SharedPreferences  
-
----
-
 ## 🎨 UI
 
 - Dark mode support  
@@ -94,6 +87,10 @@ Example:
 - Settings  
 
 ---
+
+🎥 Demo
+
+https://drive.google.com/file/d/1uMEX377Gv9z8diTrrNGTfbQdzttp-6m7/view?usp=drivesdk
 
 ## 📦 Installation
 
