@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pocket_pilot/add_transaction_screen.dart';
 import 'package:pocket_pilot/all_transactions_screen.dart';
+import 'package:pocket_pilot/currency_helper.dart';
 import  'package:pocket_pilot/insight_screen.dart';
 import 'package:pocket_pilot/settings_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen>{
   
   final box=Hive.box('transactions');
   double goal=0;
-
+  String selectedCurrency = "INR";
   String username= "";
   String getGreeting(){
     final hour=DateTime.now().hour;
@@ -39,6 +40,8 @@ class _HomeScreenState extends State<HomeScreen>{
     if(hour<17) return "Good Afternoon";
     return "Good Evening";
   }
+
+  
 
   List<TransactionModel> transactions=[];
 
@@ -84,6 +87,7 @@ class _HomeScreenState extends State<HomeScreen>{
     loadUser();
     loadTransactions();
     loadGoal();
+    loadCurrency();
   }
 
   
@@ -109,6 +113,14 @@ class _HomeScreenState extends State<HomeScreen>{
       goal=prefs.getDouble('goal') ?? 0;
     });
   }
+
+  void loadCurrency() async {
+  final prefs = await SharedPreferences.getInstance();
+  setState(() {
+    selectedCurrency = prefs.getString('currency') ?? "INR";
+  });
+}
+
 
 
   @override
@@ -177,6 +189,7 @@ if (result != null) {
     });
   }
 }
+loadCurrency();
                   }, icon: Icon(Icons.settings,
                   color: Theme.of(context).iconTheme.color?.withOpacity(0.8),),
                   tooltip: "Settings")
@@ -226,7 +239,8 @@ if (result != null) {
       const SizedBox(height: 6),
 
       Text(
-  "₹ ${totalBalance.toStringAsFixed(0)}",
+  "${CurrencyHelper.getSymbol(selectedCurrency)} "
+"${CurrencyHelper.fromINR(totalBalance, selectedCurrency).toStringAsFixed(0)}",
   style: const TextStyle(
     color: Color(0xFFF59E0B), // 👈 change
     fontSize: 28,
@@ -443,7 +457,9 @@ if (result != null) {
       ),
 
       Text(
-        "${t.type == "expense" ? "-" : "+"} ₹${t.amount}",
+        "${t.type == "expense" ? "-" : "+"} "
+"${CurrencyHelper.getSymbol(selectedCurrency)}"
+"${CurrencyHelper.fromINR(t.amount, selectedCurrency).toStringAsFixed(0)}",
         style: TextStyle(
           fontWeight: FontWeight.bold,
           color: t.type == "expense"
@@ -493,7 +509,8 @@ foregroundColor: Colors.black,
       Text(title, style: TextStyle(color: Colors.white70)),
       SizedBox(height: 4),
       Text(
-        "₹ ${value.toStringAsFixed(0)}",
+      "${CurrencyHelper.getSymbol(selectedCurrency)} "
+"${CurrencyHelper.fromINR(value, selectedCurrency).toStringAsFixed(0)}",
         style: TextStyle(
           color: color,
           fontWeight: FontWeight.bold,
@@ -524,7 +541,8 @@ color: isExpense
           Text(title,
               style: const TextStyle(color: Colors.white70)),
           Text(
-            "₹ ${value.toStringAsFixed(0)}",
+            "${CurrencyHelper.getSymbol(selectedCurrency)} "
+"${CurrencyHelper.fromINR(value, selectedCurrency).toStringAsFixed(0)}",
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,

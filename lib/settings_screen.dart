@@ -1,8 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -22,13 +20,14 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late bool isDarkMode;
   String username = "User";
-  File? profileImage;
+  String selectedCurrency = "INR";
 
   @override
   void initState() {
     super.initState();
     isDarkMode = widget.isDark;
     loadUser();
+    loadCurrency();
   }
 
   Future<void> loadUser() async {
@@ -37,22 +36,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       username = prefs.getString('username') ?? "User";
 
-      final path = prefs.getString('profile_image');
-      if (path != null) profileImage = File(path);
+    
     });
   }
 
-  Future<void> pickImage() async {
-    final picked =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-
-    if (picked != null) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('profile_image', picked.path);
-
-      setState(() => profileImage = File(picked.path));
-    }
-  }
+  
 
   void toggleTheme(bool value) async {
     setState(() => isDarkMode = value);
@@ -127,20 +115,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ✅ MATCH YOUR EXISTING CARD STYLE
-  BoxDecoration cardDecoration(BuildContext context) {
-    return BoxDecoration(
-      borderRadius: BorderRadius.circular(18),
-      color: Theme.of(context).cardColor,
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.04),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        )
-      ],
-    );
+  void loadCurrency() async {
+  final prefs = await SharedPreferences.getInstance();
+  setState(() {
+    selectedCurrency = prefs.getString('currency') ?? "INR";
+  });
+}
+
+String getSymbol(String code) {
+  switch (code) {
+    case "USD":
+      return "\$";
+    case "EUR":
+      return "€";
+    default:
+      return "₹";
   }
+}
+
+ BoxDecoration cardDecoration(BuildContext context) {
+  return BoxDecoration(
+    borderRadius: BorderRadius.circular(18),
+    gradient: LinearGradient(
+      colors: [
+        Theme.of(context).cardColor,
+        Theme.of(context).cardColor.withOpacity(0.95),
+      ],
+    ),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.05),
+        blurRadius: 10,
+        offset: const Offset(0, 4),
+      )
+    ],
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -158,44 +168,70 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           _section("Profile"),
 
-          // 👤 PROFILE CARD
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: cardDecoration(context),
+             decoration: BoxDecoration(
+    
+    borderRadius: BorderRadius.circular(24),
+    gradient: const LinearGradient(
+  colors: [
+    Color(0xFF1E293B), 
+    Color(0xFF0F172A),
+  ],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+),
+    boxShadow: [
+  BoxShadow(
+    color: Color(0xFFF59E0B).withOpacity(0.15),
+    blurRadius: 30,
+    spreadRadius: 2,
+  )
+],
+  ),
             child: Row(
               children: [
-                GestureDetector(
-                  onTap: pickImage,
-                  child: Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 26,
-                        backgroundColor:
-                            const Color(0xFFF59E0B).withOpacity(0.15),
-                        backgroundImage: profileImage != null
-                            ? FileImage(profileImage!)
-                            : null,
-                        child: profileImage == null
-                            ? const Icon(Icons.person,
-                                color: Color(0xFFF59E0B))
-                            : null,
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Color(0xFFF59E0B),
-                          ),
-                          child: const Icon(Icons.edit,
-                              size: 12, color: Colors.black),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
+               Stack(
+  children: [
+    Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFF59E0B),
+            Color(0xFFFFC107),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFF59E0B).withOpacity(0.5),
+            blurRadius: 12,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: CircleAvatar(
+        radius: 26,
+        backgroundColor: Colors.transparent,
+        child: Text(
+          username.isNotEmpty
+              ? username[0].toUpperCase()
+              : "U",
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    ),
+
+
+  ],
+),
+                
                 const SizedBox(width: 12),
 
                 Expanded(
@@ -207,20 +243,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Text(username,
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                              color: textColor,
+                              fontSize: 17,
+                              letterSpacing: 1.4,
+                              color: Colors.white,
                             )),
                         const SizedBox(height: 2),
-                        const Text("Tap to edit",
+                        const Text("Tap to edit ",
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey)),
+                                fontSize: 13, color: Colors.white70)),
                       ],
                     ),
                   ),
                 ),
 
-                Icon(Icons.arrow_forward_ios,
-                    size: 16, color: Colors.grey),
               ],
             ),
           ),
@@ -230,6 +265,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _section("Appearance"),
 
           Container(
+            padding: EdgeInsets.symmetric(horizontal: 8),
             decoration: cardDecoration(context),
             child: SwitchListTile(
               title: const Text("Dark Mode"),
@@ -243,14 +279,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _section("Preferences"),
 
           Container(
+            padding: EdgeInsets.symmetric(horizontal: 8),
             decoration: cardDecoration(context),
             child: Column(
               children: [
-                _tile("Currency", "INR (₹)"),
+                
+                ListTile(
+  title: const Text("Currency"),
+  subtitle: Text("$selectedCurrency (${getSymbol(selectedCurrency)})"),
+  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+  onTap: () async {
+    final result = await showModalBottomSheet(
+              backgroundColor:Theme.of(context).cardColor,
+
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        final currencies = [
+          {"code": "INR", "symbol": "₹"},
+          {"code": "USD", "symbol": "\$"},
+          {"code": "EUR", "symbol": "€"},
+        ];
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: currencies.map((c) {
+            return ListTile(
+              title: Text("${c["code"]} (${c["symbol"]})",
+                  style: TextStyle(fontWeight: FontWeight.w600),),
+              onTap: () {
+                Navigator.pop(context, c["code"]);
+              },
+            );
+          }).toList(),
+        );
+      },
+    );
+
+    if (result != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('currency', result);
+
+      setState(() {
+        selectedCurrency = result;
+      });
+
+      Navigator.pop(context); 
+    }
+  },
+),
 
                 divider(),
 
                 SwitchListTile(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16),
                   title: const Text("Notifications"),
                   value: true,
                   onChanged: (_) {},
@@ -263,6 +347,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 divider(),
 
                 ListTile(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16),
                   title: const Text("Help Centre"),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
@@ -271,7 +356,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       builder: (_) => AlertDialog(
                         title: const Text("Help Centre"),
                         content: const Text(
-                            "Contact: support@pocketpilot.com"),
+                            "Contact: prajaktajadhav177@gmail.com"),
                       ),
                     );
                   },
@@ -280,9 +365,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 divider(),
 
                 ListTile(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16),
                   title: const Text("Reset Data"),
                   trailing:
-                      const Icon(Icons.delete, color: Colors.red),
+                      const Icon(Icons.delete, color: Color.fromARGB(255, 254, 109, 99)),
                   onTap: _showResetDialog,
                 ),
               ],
@@ -300,6 +386,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _tile(String title, String subtitle) {
     return ListTile(
+      contentPadding: EdgeInsets.symmetric(horizontal: 16),
       title: Text(title),
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -310,16 +397,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10, top: 8),
       child: Text(
-        title.toUpperCase(),
+        title,
         style: GoogleFonts.orbitron(
-          fontSize: 11,
-          letterSpacing: 1.5,
-          fontWeight: FontWeight.w600,
+          fontSize: 12,
+          letterSpacing: 1.2,
+          fontWeight: FontWeight.bold,
           color: Theme.of(context)
               .textTheme
               .bodySmall
               ?.color
-              ?.withOpacity(0.5),
+              ?.withOpacity(0.8),
         ),
       ),
     );

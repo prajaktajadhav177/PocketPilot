@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:pocket_pilot/models/transaction_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pocket_pilot/currency_helper.dart';
 
 class AddTransactionScreen extends StatefulWidget{
   final TransactionModel? transaction;
@@ -21,6 +23,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>{
 
   String selectedType="expense";
   String selectedCategory="General";
+  String selectedCurrency = "INR";
 
 @override
 void initState(){
@@ -31,6 +34,7 @@ void initState(){
     selectedType=widget.transaction!.type;
     selectedCategory=widget.transaction!.category;
   }
+  loadCurrency();
 }
 
 @override
@@ -39,6 +43,25 @@ void dispose() {
   noteController.dispose();
   super.dispose();
 }
+
+void loadCurrency() async {
+  final prefs = await SharedPreferences.getInstance();
+  setState(() {
+    selectedCurrency = prefs.getString('currency') ?? "INR";
+  });
+}
+
+String getSymbol() {
+  switch (selectedCurrency) {
+    case "USD":
+      return "\$";
+    case "EUR":
+      return "€";
+    default:
+      return "₹";
+  }
+}
+
  @override
 Widget build(BuildContext context) {
   final isEdit = widget.transaction != null;
@@ -91,22 +114,37 @@ Widget build(BuildContext context) {
 
                 const SizedBox(height: 10),
 
-                TextField(
-                  controller: amountController,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(
-                   fontSize: 30,
-                   fontWeight: FontWeight.bold,
-                 color: Color(0xFFF59E0B),
-              ),
-                  decoration:  InputDecoration(
-                    hintText: "₹ 0.00",
-                    hintStyle:TextStyle(
-                      color: Colors.white.withOpacity(0.6)
-                    ) ,
-                    border: InputBorder.none,
-                  ),
-                ),
+               Row(
+  children: [
+    Text(
+      getSymbol(),
+      style: const TextStyle(
+        fontSize: 30,
+        fontWeight: FontWeight.bold,
+        color: Colors.white70,
+      ),
+    ),
+    const SizedBox(width: 6),
+    Expanded(
+      child: TextField(
+        controller: amountController,
+        keyboardType: TextInputType.number,
+        style: const TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFFF59E0B),
+        ),
+        decoration: const InputDecoration(
+          hintText: "0.00",
+          hintStyle: TextStyle(
+            color: Colors.white70
+          ),
+          border: InputBorder.none,
+        ),
+      ),
+    ),
+  ],
+)
               ],
             ),
           ),
@@ -256,28 +294,36 @@ Widget _buildTypeButton(String type) {
   );
 }
 
-void saveTransaction() async{
-  final amount=double.tryParse(amountController.text);
+void saveTransaction() async {
+  final inputAmount = double.tryParse(amountController.text);
 
-  if(amount==null){
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Enter Valid Amount")));
+  if (inputAmount == null) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("Enter Valid Amount")));
     return;
   }
-  final transaction=TransactionModel(
-    amount: amount, 
-  type: selectedType, 
-  category: selectedCategory, 
-  note: noteController.text,
-   date: DateTime.now().toString()
-   );
 
-   final box=Hive.box('transactions');
-   if(widget.transaction!=null){
-    await box.putAt(widget.index!,transaction.toMap());
-   }else{
+  // 🔥 convert here (INSIDE STATE LOGIC)
+  final amount =
+      CurrencyHelper.toINR(inputAmount, selectedCurrency);
+
+  final transaction = TransactionModel(
+    amount: amount, // 👈 converted value
+    type: selectedType,
+    category: selectedCategory,
+    note: noteController.text,
+    date: DateTime.now().toString(),
+  );
+
+  final box = Hive.box('transactions');
+
+  if (widget.transaction != null) {
+    await box.putAt(widget.index!, transaction.toMap());
+  } else {
     await box.add(transaction.toMap());
-   }
-   Navigator.pop(context);
+  }
+
+  Navigator.pop(context);
 }
 
 }

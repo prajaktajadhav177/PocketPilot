@@ -2,7 +2,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart' show Hive;
+import 'package:pocket_pilot/currency_helper.dart';
 import 'package:pocket_pilot/models/transaction_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class InsightScreen extends StatefulWidget{
@@ -17,10 +19,13 @@ class _InsightScreenState extends State<InsightScreen>{
   List<TransactionModel> transactions=[];
   int touchedIndex = -1;
 
+  String selectedCurrency = "INR";
+
   @override
   void initState(){
     super.initState();
     loadData();
+    loadCurrency();
   }
 
   void loadData(){
@@ -29,6 +34,13 @@ class _InsightScreenState extends State<InsightScreen>{
     .map((e)=>TransactionModel.fromMap(Map<String,dynamic>.from(e))).toList();
   
   }
+
+  void loadCurrency() async {
+  final prefs = await SharedPreferences.getInstance();
+  setState(() {
+    selectedCurrency = prefs.getString('currency') ?? "INR";
+  });
+}
 
   double get totalIncome=>transactions
   .where((t)=>t.type=="income")
@@ -66,6 +78,9 @@ Map<String, double> getCategoryData() {
   }
   return data;
 }
+
+
+
 @override
 
 Widget build(BuildContext context) {
@@ -332,9 +347,10 @@ final colors = [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text("₹ ${e.value.toStringAsFixed(0)}",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
+                            Text(
+  "${CurrencyHelper.getSymbol(selectedCurrency)} "
+  "${CurrencyHelper.fromINR(e.value, selectedCurrency).toStringAsFixed(0)}"),
+
                             Text("$percent%",
                                 style: TextStyle(
                                     fontSize: 12,
@@ -368,7 +384,8 @@ Widget buildCard(String title,double amount,Color color){
     fontSize: 12,
   ),),
         SizedBox(height: 5,),
-        Text("₹ ${amount.toStringAsFixed(0)}", 
+        Text(  "${CurrencyHelper.getSymbol(selectedCurrency)} "
+  "${CurrencyHelper.fromINR(amount, selectedCurrency).toStringAsFixed(0)}", 
         style: TextStyle(
     color: color,
     fontSize: 20, // bigger
@@ -387,7 +404,8 @@ Widget _bigStat(String title, double value, Color color) {
           style: const TextStyle(color: Colors.white70)),
       const SizedBox(height: 6),
       Text(
-        "₹ ${value.toStringAsFixed(0)}",
+        "${CurrencyHelper.getSymbol(selectedCurrency)} "
+"${CurrencyHelper.fromINR(value, selectedCurrency).toStringAsFixed(0)}",
         style: TextStyle(
           color: color,
           fontSize: 18,

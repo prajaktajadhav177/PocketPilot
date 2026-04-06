@@ -1,20 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
+import 'package:pocket_pilot/currency_helper.dart';
 import 'package:pocket_pilot/models/transaction_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AllTransactionsScreen extends StatefulWidget {
   const AllTransactionsScreen({super.key});
+
+  
 
   @override
   State<AllTransactionsScreen> createState() =>
       _AllTransactionsScreenState();
 }
 
+
 class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
   final box = Hive.box('transactions');
 
   String typeFilter = "all";
   String categoryFilter = "all";
+  String selectedCurrency = "INR";
 
   // 🔥 FIXED CATEGORY LIST (IMPORTANT)
   final List<String> allCategories = [
@@ -26,8 +33,11 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
     "Entertainment",
     "Health",
     "Education",
+    "General",
     "Other",
   ];
+
+  
 
   List<TransactionModel> get transactions =>
       box.values
@@ -50,10 +60,30 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
   final expenseColor = const Color(0xFFDC2626);
 
   @override
+void initState() {
+  super.initState();
+  loadCurrency();
+}
+
+void loadCurrency() async {
+  final prefs = await SharedPreferences.getInstance();
+  setState(() {
+    selectedCurrency = prefs.getString('currency') ?? "INR";
+  });
+}
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("All Transactions"),
+        title: Text(
+  "All Transactions",
+  style: GoogleFonts.orbitron(
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.3,
+  ),
+),
+backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         centerTitle: true,
         elevation: 0,
       ),
@@ -64,17 +94,19 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Theme.of(context).cardColor,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                )
-              ],
-            ),
+           decoration: BoxDecoration(
+  borderRadius: BorderRadius.circular(20),
+  gradient: const LinearGradient(
+    colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+  ),
+  boxShadow: [
+    BoxShadow(
+      color: Color(0xFFF59E0B).withOpacity(0.1),
+      blurRadius: 20,
+      spreadRadius: 1,
+    )
+  ],
+),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -82,7 +114,9 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                 // 🔷 TYPE FILTER (SEGMENT STYLE)
                 const Text(
                   "Transaction Type",
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                  style: TextStyle(fontWeight: FontWeight.w600,
+              color:Colors.white70
+              ),
                 ),
                 const SizedBox(height: 10),
 
@@ -96,10 +130,10 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
 
                 const SizedBox(height: 20),
 
-                // 🔽 CATEGORY DROPDOWN
                 const Text(
                   "Category",
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                  style: TextStyle(fontWeight: FontWeight.w600,
+                  color: Colors.white70),
                 ),
                 const SizedBox(height: 10),
 
@@ -108,12 +142,15 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                       const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
+                    color: Colors.white.withOpacity(0.05),
                     border: Border.all(
                       color: Colors.grey.withOpacity(0.2),
                     ),
                   ),
                   child: DropdownButtonHideUnderline(
+                    
                     child: DropdownButton<String>(
+                      dropdownColor: Color(0xFF1E293B),
                       value: categoryFilter,
                       isExpanded: true,
                       icon: const Icon(
@@ -123,9 +160,11 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                         return DropdownMenuItem(
                           value: category,
                           child: Text(
-                            category.toUpperCase(),
+                            category,
                             style: const TextStyle(
-                                fontWeight: FontWeight.w500),
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white
+                            )
                           ),
                         );
                       }).toList(),
@@ -170,15 +209,17 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
           margin: const EdgeInsets.only(right: 8),
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: isSelected ? primary : Colors.grey.withOpacity(0.1),
-          ),
+  borderRadius: BorderRadius.circular(12),
+  color: isSelected
+      ? const Color(0xFFF59E0B)
+      : Colors.white.withOpacity(0.08),
+),
           child: Center(
             child: Text(
-              value.toUpperCase(),
+              value[0].toUpperCase() + value.substring(1),
               style: TextStyle(
                 color:
-                    isSelected ? Colors.white : Colors.grey.shade700,
+                    isSelected ? Colors.white : const Color.fromARGB(255, 146, 145, 145),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -213,12 +254,12 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
           // ICON
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isExpense
-                  ? expenseColor.withOpacity(0.1)
-                  : incomeColor.withOpacity(0.1),
-            ),
+           decoration: BoxDecoration(
+  shape: BoxShape.circle,
+  color: isExpense
+      ? expenseColor.withOpacity(0.1)
+      : incomeColor.withOpacity(0.1),
+),
             child: Icon(
               isExpense
                   ? Icons.arrow_downward
@@ -255,7 +296,9 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
 
           // AMOUNT
           Text(
-            "${isExpense ? "-" : "+"} ₹${t.amount}",
+            "${isExpense ? "-" : "+"} "
+"${CurrencyHelper.getSymbol(selectedCurrency)} "
+"${CurrencyHelper.fromINR(t.amount, selectedCurrency).toStringAsFixed(0)}",
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
