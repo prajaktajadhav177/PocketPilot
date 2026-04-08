@@ -105,7 +105,6 @@ class _SplashScreenState extends State<SplashScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
 
-                // 🔥 GLOW EFFECT
                 Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
@@ -136,7 +135,6 @@ class _SplashScreenState extends State<SplashScreen>
 
                 const SizedBox(height: 20),
 
-                // 🔥 APP NAME
                 Text(
                   "PocketPilot",
                  style: GoogleFonts.orbitron(
@@ -158,7 +156,6 @@ class _SplashScreenState extends State<SplashScreen>
 
                 const SizedBox(height: 32),
 
-                // 🔥 LOADER
                 SizedBox(
                   width: 22,
                   height: 22,
@@ -170,7 +167,6 @@ class _SplashScreenState extends State<SplashScreen>
 
                 const SizedBox(height: 40),
 
-                // 🔥 BOTTOM BRAND TOUCH
                 Text(
                   "Powered by PocketPilot",
                   style: TextStyle(
