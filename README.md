@@ -10,7 +10,7 @@ Pocket Pilot is a Flutter-based expense tracking app built to manage daily finan
 - Track both income and expenses  
 - Categorize spending (Food, Transport, Shopping, etc.)  
 - View all transactions with filters  
-- Clean and modern fintech-style UI  
+- Clean and modern UI  
 
 ---
 
@@ -95,7 +95,7 @@ https://drive.google.com/file/d/1uMEX377Gv9z8diTrrNGTfbQdzttp-6m7/view?usp=drive
 ## 📦 Installation
 
 ```bash
-git clone https://github.com/prajaktajadhav177/pocketPiolet.git
+git clone https://github.com/prajaktajadhav177/PocketPilot.git
 cd pocketPiolet
 flutter pub get
 flutter run
