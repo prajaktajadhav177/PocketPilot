@@ -96,6 +96,5 @@ https://drive.google.com/file/d/1uMEX377Gv9z8diTrrNGTfbQdzttp-6m7/view?usp=drive
 
 ```bash
 git clone https://github.com/prajaktajadhav177/PocketPilot.git
-cd pocketPiolet
 flutter pub get
 flutter run
